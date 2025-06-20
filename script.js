@@ -49,11 +49,18 @@ function performGlobalReset() {
     // A recursive function to walk through all frames.
     function walkFrames(win) {
         // Apply reset to the current window's document.
-        applyReset(win.document);
+        // We need to wrap this in a try-catch because accessing win.document
+        // on a cross-origin frame will throw a security error.
+        try {
+            applyReset(win.document);
 
-        // Recursively call for all frames within this window.
-        for (let i = 0; i < win.frames.length; i++) {
-            walkFrames(win.frames[i]);
+            // Recursively call for all frames within this window.
+            // Accessing win.frames is also subject to cross-origin restrictions.
+            for (let i = 0; i < win.frames.length; i++) {
+                walkFrames(win.frames[i]);
+            }
+        } catch (e) {
+            console.warn('Could not access a frame. This is likely due to cross-origin restrictions.', e.message);
         }
     }
 
@@ -70,4 +77,3 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Reset button not found.');
     }
 });
-
